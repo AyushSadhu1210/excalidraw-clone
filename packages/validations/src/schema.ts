@@ -1,4 +1,4 @@
-import { email, z } from "zod";
+import { z } from "zod";
 
 export const CreateUserSchema = z.object({
   email: z.email().min(3).max(20),
@@ -12,5 +12,5 @@ export const SigningSchema = z.object({
 });
 
 export const CreateRoomSchema = z.object({
-  name: z.string().min(3).max(20),
+  slug: z.string().min(3).max(20),
 });
