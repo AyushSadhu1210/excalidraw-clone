@@ -1,4 +1,4 @@
-import { IRouter, RequestHandler, Router } from "express";
+import { IRouter, Router } from "express";
 import {
   createRoomController,
   getRoomChatController,

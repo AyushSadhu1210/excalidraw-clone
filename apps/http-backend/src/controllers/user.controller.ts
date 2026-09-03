@@ -6,6 +6,7 @@ import {
 } from "@repo/validations";
 import { prismaClient } from "@repo/db/client";
 import jwt from "jsonwebtoken";
+import { env } from "@repo/env";
 
 interface AuthenticatedRequest extends Request {
   userId: string;
@@ -66,8 +67,11 @@ export const userSigninController = async (req: Request, res: Response) => {
     {
       userId: user?.id,
     },
-    "secret",
+    env.JWT_SECRET,
   );
+  return res.json({
+    token,
+  });
 };
 
 export const createRoomController = async (
@@ -84,15 +88,19 @@ export const createRoomController = async (
   }
   const userId = req.userId;
   try {
-    const room = prismaClient.room.create({
+    const room = await prismaClient.room.create({
       data: {
-        slug: parsedData.data.name,
-        adminId: userId as string,
+        slug: parsedData.data.slug,
+        adminId: userId,
       },
+    });
+    return res.json({
+      message: "Room created successfully",
+      roomId: room.id,
     });
   } catch (error) {
     console.error(error);
-    res.status(411).json({
+    return res.status(411).json({
       message: "Room already exists",
     });
   }
