@@ -87,7 +87,7 @@ export const createRoomController = async (
     const room = prismaClient.room.create({
       data: {
         slug: parsedData.data.name,
-        adminId: userId as string,
+        adminId: userId,
       },
     });
   } catch (error) {

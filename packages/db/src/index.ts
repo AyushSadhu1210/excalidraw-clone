@@ -7,7 +7,6 @@ import { PrismaPg } from "@prisma/adapter-pg";
 const connectionString = env.DATABASE_URL;
 const dbUrl = new URL(connectionString);
 
-// This machine's IPv6 route to Neon is broken; force IPv4 and keep SNI via servername.
 const { address: ipv4Host } = await lookup(dbUrl.hostname, { family: 4 });
 
 const pool = new Pool({
