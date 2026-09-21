@@ -7,4 +7,5 @@ export const envSchema = z.object({
   NEXT_PUBLIC_BACKEND_URL: z
     .string()
     .min(1, "NEXT_PUBLIC_BACKEND_URL is required"),
+  NEXT_PUBLIC_WS_URL: z.string().min(1, "NEXT_PUBLIC_WS_URL is required"),
 });

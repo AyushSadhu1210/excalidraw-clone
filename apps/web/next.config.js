@@ -6,6 +6,7 @@ const nextConfig = {
   // Client components must use process.env.NEXT_PUBLIC_* — never import @repo/env.
   env: {
     NEXT_PUBLIC_BACKEND_URL: env.NEXT_PUBLIC_BACKEND_URL,
+    NEXT_PUBLIC_WS_URL: env.NEXT_PUBLIC_WS_URL,
   },
 };
 
