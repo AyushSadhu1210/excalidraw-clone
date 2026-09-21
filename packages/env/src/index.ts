@@ -1,7 +1,6 @@
 import { config } from "dotenv";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
-import { z } from "zod";
 import { envSchema } from "@repo/validations";
 
 const envFilePath = resolve(dirname(fileURLToPath(import.meta.url)), "../.env");

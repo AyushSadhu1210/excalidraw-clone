@@ -16,7 +16,7 @@ export const userSignUpController = async (req: Request, res: Response) => {
   const parsedData = CreateUserSchema.safeParse(req.body);
   if (!parsedData.success) {
     console.error(parsedData.error);
-    res.json({
+    res.status(400).json({
       message: "Incorrect inputs",
     });
     return;
@@ -24,18 +24,31 @@ export const userSignUpController = async (req: Request, res: Response) => {
   try {
     const user = await prismaClient.user.create({
       data: {
-        email: parsedData.data?.email,
-        password: parsedData.data?.password,
-        name: parsedData.data?.name,
+        email: parsedData.data.email,
+        password: parsedData.data.password,
+        name: parsedData.data.name,
       },
     });
-    res.json(user.id);
+    const token = jwt.sign(
+      {
+        userId: user.id,
+      },
+      env.JWT_SECRET,
+    );
+    return res.status(201).json({
+      token,
+      userId: user.id,
+    });
   } catch (e) {
     console.error("signup error", e);
     const err = e as Error & { code?: string };
-    res.status(411).json({
+    if (err.code === "P2002") {
+      return res.status(409).json({
+        message: "Email already registered",
+      });
+    }
+    res.status(500).json({
       message: err.message || "Signup failed",
-      code: err.code,
     });
   }
 };
@@ -44,7 +57,7 @@ export const userSigninController = async (req: Request, res: Response) => {
   const parsedData = SigningSchema.safeParse(req.body);
   if (!parsedData.success) {
     console.error(parsedData.error);
-    res.json({
+    res.status(400).json({
       message: "Incorrect inputs",
     });
     return;
@@ -58,14 +71,14 @@ export const userSigninController = async (req: Request, res: Response) => {
   });
 
   if (!user) {
-    return res.status(403).json({
-      message: "Not Authorised",
+    return res.status(401).json({
+      message: "Invalid email or password",
     });
   }
 
   const token = jwt.sign(
     {
-      userId: user?.id,
+      userId: user.id,
     },
     env.JWT_SECRET,
   );
@@ -127,4 +140,21 @@ export const getRoomChatController = async (req: Request, res: Response) => {
       messages: [],
     });
   }
+};
+
+export const getRoomBySlugController = async (req: Request, res: Response) => {
+  const slug = req.params.slug || "";
+  const room = await prismaClient.room.findFirst({
+    where: {
+      slug: slug as string,
+    },
+  });
+  if (!room) {
+    return res.status(404).json({
+      message: "Room not found",
+    });
+  }
+  return res.json({
+    roomId: room.id,
+  });
 };
