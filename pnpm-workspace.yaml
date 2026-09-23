@@ -7,4 +7,5 @@ allowBuilds:
   esbuild: false
   msgpackr-extract: false
   prisma: false
+  unrs-resolver: false
   workerd: false

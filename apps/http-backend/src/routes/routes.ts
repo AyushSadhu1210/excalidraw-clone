@@ -1,6 +1,7 @@
 import { IRouter, Router } from "express";
 import {
   createRoomController,
+  getRoomBySlugController,
   getRoomChatController,
   userSigninController,
   userSignUpController,
@@ -21,5 +22,5 @@ router.get(
   authenticationMiddleware,
   getRoomChatController,
 );
-
+router.get("/get-room-by-slug/:slug", getRoomBySlugController);
 export default router;
