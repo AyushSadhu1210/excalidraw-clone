@@ -1,20 +1,35 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
-type Shape = {
-  type: "Rect";
-  x: number;
-  y: number;
-  height: number;
-  width: number;
-};
+type Shape =
+  | {
+      type: "rect";
+      x: number;
+      y: number;
+      height: number;
+      width: number;
+    }
+  | {
+      type: "circle";
+      centerX: number;
+      centerY: number;
+      radius: number;
+    };
+
+type Tool = "rect" | "circle";
 
 export default function Canvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isClicked = useRef<boolean>(false);
   const startPos = useRef<{ x: number; y: number } | null>(null);
-  const rectangles = useRef<Shape[]>([]);
+  const shapes = useRef<Shape[]>([]);
+  const [selectedTool, setSelectedTool] = useState<Tool>("rect");
+  const toolRef = useRef<Tool>("rect");
+
+  useEffect(() => {
+    toolRef.current = selectedTool;
+  }, [selectedTool]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -23,14 +38,25 @@ export default function Canvas() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const handleDrawShape = (shape: Shape) => {
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 2;
+
+      if (shape.type === "rect") {
+        ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+      } else if (shape.type === "circle") {
+        ctx.beginPath();
+        ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    };
+
     const renderScene = () => {
       ctx.fillStyle = "black";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.strokeStyle = "white";
-      rectangles.current.map((r) =>
-        ctx.strokeRect(r.x, r.y, r.width, r.height),
-      );
+      shapes.current.map((shape) => handleDrawShape(shape));
     };
 
     renderScene();
@@ -57,23 +83,32 @@ export default function Canvas() {
 
       const currentPos = getCanvasCoordinates(e);
       const { x, y } = startPos.current;
-      const width = currentPos.x - x;
-      const height = currentPos.y - y;
+      if (toolRef.current === "rect") {
+        const width = currentPos.x - x;
+        const height = currentPos.y - y;
 
-      if (Math.abs(width) > 2 || Math.abs(height) > 2) {
-        // Normalize negative width/height so x, y is always top-left (optional, but cleaner data)
-        const finalX = width < 0 ? currentPos.x : x;
-        const finalY = height < 0 ? currentPos.y : y;
-        const finalW = Math.abs(width);
-        const finalH = Math.abs(height);
+        if (Math.abs(width) > 2 || Math.abs(height) > 2) {
+          shapes.current.push({
+            type: "rect",
+            x: width < 0 ? currentPos.x : x,
+            y: height < 0 ? currentPos.y : y,
+            width: Math.abs(width),
+            height: Math.abs(height),
+          });
+        }
+      } else if (toolRef.current === "circle") {
+        const dx = currentPos.x - x;
+        const dy = currentPos.y - y;
+        const radius = Math.sqrt(dx * dx + dy * dy);
 
-        rectangles.current.push({
-          type: "Rect",
-          x: finalX,
-          y: finalY,
-          width: finalW,
-          height: finalH,
-        });
+        if (Math.abs(radius) > 2) {
+          shapes.current.push({
+            type: "circle",
+            centerX: x,
+            centerY: y,
+            radius: radius,
+          });
+        }
       }
 
       // Reset interaction state and render final canvas
@@ -88,14 +123,18 @@ export default function Canvas() {
       const currentPos = getCanvasCoordinates(e);
       const { x, y } = startPos.current;
 
-      const width = currentPos.x - x;
-      const height = currentPos.y - y;
-
       renderScene();
 
-      ctx.strokeStyle = "white";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, width, height);
+      if (toolRef.current === "rect") {
+        const width = currentPos.x - x;
+        const height = currentPos.y - y;
+        handleDrawShape({ type: "rect", x, y, width, height });
+      } else if (toolRef.current === "circle") {
+        const dx = currentPos.x - x;
+        const dy = currentPos.y - y;
+        const radius = Math.sqrt(dx * dx + dy * dy);
+        handleDrawShape({ type: "circle", centerX: x, centerY: y, radius });
+      }
     };
 
     canvas.addEventListener("mousedown", handleMouseDown);
@@ -111,6 +150,8 @@ export default function Canvas() {
 
   return (
     <div>
+      <button onClick={() => setSelectedTool("rect")}>Rectangle</button>
+      <button onClick={() => setSelectedTool("circle")}>Circle</button>
       <canvas
         ref={canvasRef}
         width={1000}
