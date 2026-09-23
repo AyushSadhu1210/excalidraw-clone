@@ -1,18 +1,41 @@
 "use client"
 
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
+import axios from "axios"
+
+type Shape = {
+    type: "rect",
+    x: number,
+    y: number,
+    width: number,
+    height: number
+} | {
+    type: "circle",
+    centerX: number,
+    centerY: number,
+    radius: number
+}
+
+type tool = "rect" | "circle"
 
 export default function Canvas() {
+    const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL
     const canvasRef = useRef<HTMLCanvasElement>(null)
     let clicked = false;
     let startX: number;
     let startY: number;
+    const [shape, setShape] = useState<tool>("rect")
     useEffect(() => {
         if (canvasRef.current) {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext("2d")
 
+            let existingShapes: Shape[] = []
+
             if (!ctx) return
+
+            ctx.fillStyle = "rgba(0, 0, 0)"
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
 
             canvas.addEventListener("mousedown", (e) => {
                 clicked = true
@@ -22,18 +45,50 @@ export default function Canvas() {
 
             canvas.addEventListener("mouseup", (e) => {
                 clicked = false;
-                console.log("mouseup:", e.clientX, e.clientY)
+                const width = e.clientX - startX
+                const height = e.clientY - startY
+                existingShapes.push({
+                    type: "rect",
+                    x: startX,
+                    y: startY,
+                    width,
+                    height
+                })
             })
 
             canvas.addEventListener("mousemove", (e) => {
                 if (clicked) {
                     const width = e.clientX - startX
                     const height = e.clientY - startY
-                    ctx.clearRect(0, 0, canvas.width, canvas.height)
+                    clearCanvas(existingShapes, ctx, canvas)
+                    ctx.strokeStyle = "rgba(255, 255, 255)"
                     ctx.strokeRect(startX, startY, width, height)
                 }
             })
         }
+
+        const clearCanvas = (existingShapes: Shape[], ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height)
+            ctx.fillStyle = "rgba(0, 0, 0)"
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+            existingShapes.map((shape) => {
+                if (shape.type === "rect") {
+                    ctx.strokeRect(shape.x, shape.y, shape.width, shape.height)
+                }
+            })
+        }
+
+        const getExistingShapes = async (roomId: number) => {
+            const response = await axios.get(`${BACKEND_URL}/get-room-chats/${roomId}`)
+            const chats = response.data.chats;
+            const shapes = chats.map((x: { chat: string }) => {
+                const messageData = JSON.parse(x.chat)
+                return messageData
+            })
+            return shapes
+        }
+        getExistingShapes(1)
     }, [])
     return <div>
         <canvas ref={canvasRef} height={500} width={1000}>

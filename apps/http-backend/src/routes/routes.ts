@@ -24,3 +24,4 @@ router.get(
 );
 router.get("/get-room-by-slug/:slug", getRoomBySlugController);
 export default router;
+  
