@@ -26,6 +26,7 @@ export const clearCanvas = (
 
   existingShapes.map((shape) => {
     if (shape.type === "rect") {
+      ctx.strokeStyle = "rgba(255, 255, 255)";
       ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
     }
   });
@@ -42,9 +43,27 @@ export const initDraw = (
   let startY: number;
 
   const shapes: Shape[] = existingShapes;
+  const roomId = 1;
 
   // Initial black background fill
   clearCanvas(shapes, ctx, canvas);
+
+  // Must join so the server will broadcast this user's room messages
+  socket.send(
+    JSON.stringify({
+      type: "join_room",
+      roomId,
+    }),
+  );
+
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.type === "chat") {
+      const shape = JSON.parse(data.message) as Shape;
+      shapes.push(shape);
+      clearCanvas(shapes, ctx, canvas);
+    }
+  };
 
   const onMouseDown = (e: MouseEvent) => {
     clicked = true;
@@ -64,11 +83,12 @@ export const initDraw = (
       width,
       height,
     };
-    shapes.push(newShape);
+    // Don't push locally — wait for the WS broadcast so every client
+    // (including the drawer) adds the shape exactly once via onmessage
     socket.send(
       JSON.stringify({
         type: "chat",
-        roomId: 1,
+        roomId,
         message: JSON.stringify(newShape),
       }),
     );

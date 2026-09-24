@@ -19,7 +19,11 @@ export const Canvas = () => {
     };
 
     return () => {
-      socket.close();
+     setTimeout(() => {
+      if(socket.readyState === WebSocket.OPEN){
+        socket.close()
+       }
+     }, 0)
     };
   }, [NEXT_PUBLIC_WS_URL]);
 
