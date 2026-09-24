@@ -17,11 +17,6 @@ router.post(
   authenticationMiddleware,
   createRoomController as any,
 );
-router.get(
-  "/get-room-chats/:roomId",
-  authenticationMiddleware,
-  getRoomChatController,
-);
+router.get("/get-room-chats/:roomId", getRoomChatController);
 router.get("/get-room-by-slug/:slug", getRoomBySlugController);
 export default router;
-  

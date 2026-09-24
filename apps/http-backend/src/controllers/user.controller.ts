@@ -122,7 +122,7 @@ export const createRoomController = async (
 export const getRoomChatController = async (req: Request, res: Response) => {
   try {
     const roomId = Number(req.params.roomId);
-    const chats = prismaClient.chat.findMany({
+    const chats = await prismaClient.chat.findMany({
       where: {
         roomId: roomId,
       },

@@ -7,7 +7,13 @@ const app = express();
 const PORT = env.PORT;
 
 // Global Middlewares
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000", // or '*' for development
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // Mount Routes
