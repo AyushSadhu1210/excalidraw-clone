@@ -73,6 +73,13 @@ export const Canvas = () => {
         >
           Circle
         </button>
+        <button
+          onClick={() => {
+            selectedShapeRef.current = "line";
+          }}
+        >
+          Line
+        </button>
       </div>
       <canvas ref={canvasRef} height={500} width={1000}></canvas>
     </div>

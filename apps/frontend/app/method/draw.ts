@@ -42,6 +42,11 @@ export const clearCanvas = (
       ctx.beginPath();
       ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
       ctx.stroke();
+    } else if (shape.type === "line") {
+      ctx.beginPath()
+      ctx.moveTo(shape.startX, shape.startY)
+      ctx.lineTo(shape.endX, shape.endY)
+      ctx.stroke()
     }
   });
 };
@@ -104,10 +109,18 @@ export const initDraw = (
       const radius = Math.max(width, height);
       newShape = {
         type: "circle",
-        centerX: startX + radius,
-        centerY: startY + radius,
+        centerX: startX,
+        centerY: startY,
         radius,
-      };
+      }
+    } else if (selectedShapeRef.current === "line") {
+      newShape = {
+        type: "line",
+        startX,
+        startY,
+        endX: e.clientX,
+        endY: e.clientY
+      }
     }
     // Don't push locally — wait for the WS broadcast so every client
     // (including the drawer) adds the shape exactly once via onmessage
@@ -136,6 +149,9 @@ export const initDraw = (
         ctx.stroke();
       } else if (selectedShapeRef.current === "line") {
         ctx.beginPath();
+        ctx.moveTo(startX, startY)
+        ctx.lineTo(e.clientX, e.clientY)
+        ctx.stroke()
       }
     }
   };
