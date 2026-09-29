@@ -3,16 +3,17 @@ import { useRef, useEffect, useState } from "react";
 import {
   clearCanvas,
   getExistingShapes,
-  initDraw,
   Shape,
   ShapeTypes,
 } from "@/app/method/draw";
+import { Game } from "../method/game";
 
 export const Canvas = () => {
   const NEXT_PUBLIC_WS_URL = process.env.NEXT_PUBLIC_WS_URL || "";
   const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [game, setGame] = useState<Game>()
+  const [selectedTool, setSelectedTool] = useState<ShapeTypes>("rect")
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const selectedShapeRef = useRef<ShapeTypes>("rect");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -31,6 +32,10 @@ export const Canvas = () => {
   }, [NEXT_PUBLIC_WS_URL]);
 
   useEffect(() => {
+    game?.setShape(selectedTool)
+  }, [])
+
+  useEffect(() => {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
@@ -40,15 +45,8 @@ export const Canvas = () => {
         try {
           const existingShapes: Shape[] = await getExistingShapes(1);
           clearCanvas(existingShapes, ctx, canvas);
-          if (selectedShapeRef.current) {
-            initDraw(
-              canvas,
-              ctx,
-              existingShapes,
-              socket,
-              selectedShapeRef,
-            );
-          }
+          const game = new Game(canvas, "2", socket)
+          setGame(game)
         } catch (error) {
           console.error("Failed to load existing shapes:", error);
         }
@@ -61,21 +59,21 @@ export const Canvas = () => {
       <div>
         <button
           onClick={() => {
-            selectedShapeRef.current = "rect";
+            setSelectedTool("rect")
           }}
         >
           Rectangle
         </button>
         <button
           onClick={() => {
-            selectedShapeRef.current = "circle";
+            setSelectedTool("circle")
           }}
         >
           Circle
         </button>
         <button
           onClick={() => {
-            selectedShapeRef.current = "line";
+            setSelectedTool("line")
           }}
         >
           Line
