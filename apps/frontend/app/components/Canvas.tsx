@@ -5,11 +5,14 @@ import {
   getExistingShapes,
   initDraw,
   Shape,
+  ShapeTypes,
 } from "@/app/method/draw";
+
 export const Canvas = () => {
   const NEXT_PUBLIC_WS_URL = process.env.NEXT_PUBLIC_WS_URL || "";
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const selectedShapeRef = useRef<ShapeTypes>("rect");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -19,11 +22,11 @@ export const Canvas = () => {
     };
 
     return () => {
-     setTimeout(() => {
-      if(socket.readyState === WebSocket.OPEN){
-        socket.close()
-       }
-     }, 0)
+      setTimeout(() => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.close();
+        }
+      }, 0);
     };
   }, [NEXT_PUBLIC_WS_URL]);
 
@@ -37,7 +40,15 @@ export const Canvas = () => {
         try {
           const existingShapes: Shape[] = await getExistingShapes(1);
           clearCanvas(existingShapes, ctx, canvas);
-          initDraw(canvas, ctx, existingShapes, socket);
+          if (selectedShapeRef.current) {
+            initDraw(
+              canvas,
+              ctx,
+              existingShapes,
+              socket,
+              selectedShapeRef,
+            );
+          }
         } catch (error) {
           console.error("Failed to load existing shapes:", error);
         }
@@ -47,6 +58,22 @@ export const Canvas = () => {
   }, [socket]);
   return (
     <div>
+      <div>
+        <button
+          onClick={() => {
+            selectedShapeRef.current = "rect";
+          }}
+        >
+          Rectangle
+        </button>
+        <button
+          onClick={() => {
+            selectedShapeRef.current = "circle";
+          }}
+        >
+          Circle
+        </button>
+      </div>
       <canvas ref={canvasRef} height={500} width={1000}></canvas>
     </div>
   );

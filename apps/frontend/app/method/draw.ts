@@ -1,19 +1,28 @@
 import axios from "axios";
 
+export type ShapeTypes = "rect" | "circle" | "line";
+
 export type Shape =
   | {
-      type: "rect";
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    }
+    type: "rect";
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
   | {
-      type: "circle";
-      centerX: number;
-      centerY: number;
-      radius: number;
-    };
+    type: "circle";
+    centerX: number;
+    centerY: number;
+    radius: number;
+  }
+  | {
+    type: "line";
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
+  };
 
 export const clearCanvas = (
   existingShapes: Shape[],
@@ -25,9 +34,14 @@ export const clearCanvas = (
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   existingShapes.map((shape) => {
+    ctx.strokeStyle = "rgba(255, 255, 255)";
+
     if (shape.type === "rect") {
-      ctx.strokeStyle = "rgba(255, 255, 255)";
       ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+    } else if (shape.type === "circle") {
+      ctx.beginPath();
+      ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
+      ctx.stroke();
     }
   });
 };
@@ -37,10 +51,12 @@ export const initDraw = (
   ctx: CanvasRenderingContext2D,
   existingShapes: Shape[],
   socket: WebSocket,
+  selectedShapeRef: React.RefObject<ShapeTypes>,
 ) => {
   let clicked = false;
   let startX: number;
   let startY: number;
+  let newShape: Shape;
 
   const shapes: Shape[] = existingShapes;
   const roomId = 1;
@@ -76,13 +92,23 @@ export const initDraw = (
     const width = e.clientX - startX;
     const height = e.clientY - startY;
 
-    const newShape: Shape = {
-      type: "rect",
-      x: startX,
-      y: startY,
-      width,
-      height,
-    };
+    if (selectedShapeRef.current === "rect") {
+      newShape = {
+        type: "rect",
+        x: startX,
+        y: startY,
+        width,
+        height,
+      };
+    } else if (selectedShapeRef.current === "circle") {
+      const radius = Math.max(width, height);
+      newShape = {
+        type: "circle",
+        centerX: startX + radius,
+        centerY: startY + radius,
+        radius,
+      };
+    }
     // Don't push locally — wait for the WS broadcast so every client
     // (including the drawer) adds the shape exactly once via onmessage
     socket.send(
@@ -101,7 +127,16 @@ export const initDraw = (
 
       clearCanvas(shapes, ctx, canvas);
       ctx.strokeStyle = "rgba(255, 255, 255)";
-      ctx.strokeRect(startX, startY, width, height);
+      if (selectedShapeRef.current === "rect") {
+        ctx.strokeRect(startX, startY, width, height);
+      } else if (selectedShapeRef.current === "circle") {
+        const radius = Math.max(width, height);
+        ctx.beginPath();
+        ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+        ctx.stroke();
+      } else if (selectedShapeRef.current === "line") {
+        ctx.beginPath();
+      }
     }
   };
 
