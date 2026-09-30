@@ -1,9 +1,6 @@
 "use client";
 import { useRef, useEffect, useState } from "react";
 import {
-  clearCanvas,
-  getExistingShapes,
-  Shape,
   ShapeTypes,
 } from "@/app/method/draw";
 import { Game } from "../method/game";
@@ -33,27 +30,21 @@ export const Canvas = () => {
 
   useEffect(() => {
     game?.setShape(selectedTool)
-  }, [])
+  }, [selectedTool, game])
 
   useEffect(() => {
-    if (canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-      if (!ctx || !socket) return;
+    if (!canvasRef.current || !socket) return
+    const canvas = canvasRef.current
 
-      const setUpCanvas = async () => {
-        try {
-          const existingShapes: Shape[] = await getExistingShapes(1);
-          clearCanvas(existingShapes, ctx, canvas);
-          const game = new Game(canvas, "2", socket)
-          setGame(game)
-        } catch (error) {
-          console.error("Failed to load existing shapes:", error);
-        }
-      };
-      setUpCanvas();
+    const gameInstanse = new Game(canvas, 2, socket)
+    gameInstanse.setShape(selectedTool)
+    setGame(gameInstanse)
+
+    return () => {
+      gameInstanse?.destroy()
     }
   }, [socket]);
+
   return (
     <div>
       <div>

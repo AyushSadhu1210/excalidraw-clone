@@ -1,11 +1,11 @@
 import { Canvas } from "@/app/components/Canvas";
 
 export default async function CanvasPage({
-  params,
+    params,
 }: {
-  params: { roomId: string };
+    params: { roomId: string };
 }) {
-  const { roomId } = await params;
-  console.log("roomId", roomId);
-  return <Canvas />;
+    const { roomId } = await params;
+    console.log("roomId", roomId);
+    return <Canvas />;
 }
